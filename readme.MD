@@ -40,5 +40,3 @@ python app.py
 - If using Ollama fallback, run Ollama locally and ensure it's reachable on port `11434`.
 - Model files created by training: `math_model.pkl`, `vectorizer.pkl`.
 
-## License
-Add a LICENSE file as needed.
