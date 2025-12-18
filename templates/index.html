@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Math Buddy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Baloo Bhaijaan 2', cursive;
+            background: linear-gradient(to bottom right, #ffd6e0, #e0f7fa);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-container {
+            background-color: white;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+
+        .chat-header {
+            text-align: center;
+            font-size: 28px;
+            color: #ff4081;
+            margin-bottom: 20px;
+        }
+
+        .chat-box {
+            height: 300px;
+            overflow-y: auto;
+            border: 2px dashed #eee;
+            padding: 10px;
+            background: #fff5f8;
+            border-radius: 15px;
+            font-size: 18px;
+        }
+
+        .chat-box p {
+            margin: 10px 0;
+        }
+
+        .chat-box .user {
+            text-align: right;
+            color: #0d47a1;
+        }
+
+        .chat-box .bot {
+            text-align: left;
+            color: #388e3c;
+        }
+
+        .input-area {
+            margin-top: 15px;
+            display: flex;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ff80ab;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        button {
+            margin-left: 10px;
+            background-color: #ff4081;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #f50057;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">🎓 Smart Math Buddy 🤖</div>
+        <div class="chat-box" id="chatBox">
+            <p class="bot">👋 Hi! I'm your math buddy. Ask me any math question!</p>
+        </div>
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Type your question...">
+            <button onclick="sendMessage()">Ask</button>
+            <button onclick="startListening()">🎤 Speak</button>
+        </div>
+    </div>
+
+    <script>
+        const synth = window.speechSynthesis;
+
+        async function sendMessage() {
+            const inputField = document.getElementById("userInput");
+            const chatBox = document.getElementById("chatBox");
+            const userText = inputField.value.trim();
+
+            if (userText === "") return;
+
+            const userMsg = document.createElement("p");
+            userMsg.textContent = "You: " + userText;
+            userMsg.className = "user";
+            chatBox.appendChild(userMsg);
+            inputField.value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const response = await fetch("/solve", {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: userText })
+            });
+
+            const data = await response.json();
+            const botMsg = document.createElement("p");
+            botMsg.textContent = "Bot: " + data.answer;
+            botMsg.className = "bot";
+            chatBox.appendChild(botMsg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Speak answer
+            const utterance = new SpeechSynthesisUtterance(data.answer);
+            utterance.lang = 'en-US';
+            synth.speak(utterance);
+        }
+
+        function startListening() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+
+            recognition.start();
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById("userInput").value = transcript;
+                sendMessage();
+            };
+
+            recognition.onerror = function(event) {
+                alert('Speech recognition error: ' + event.error);
+            };
+        }
+    </script>
+</body>
+</html>
